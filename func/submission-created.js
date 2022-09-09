@@ -1,10 +1,10 @@
-import fetch from 'node-fetch';
+const fetch = require("node-fetch");
 
-import { API_ENDPOINT, MAX_EMBED_FIELD_CHARS, MAX_EMBED_FOOTER_CHARS } from "./helpers/discord-helpers.js";
-import { createJwt, decodeJwt } from "./helpers/jwt-helpers.js";
-import { getBan, isBlocked } from "./helpers/user-helpers.js";
+const { API_ENDPOINT, MAX_EMBED_FIELD_CHARS, MAX_EMBED_FOOTER_CHARS } = require("./helpers/discord-helpers.js");
+const { createJwt, decodeJwt } = require("./helpers/jwt-helpers.js");
+const { getBan, isBlocked } = require("./helpers/user-helpers.js");
 
-export async function handler(event, context) {
+exports.handler = async function (event, context) {
     let payload;
 
     if (process.env.USE_NETLIFY_FORMS) {
@@ -19,15 +19,17 @@ export async function handler(event, context) {
         const params = new URLSearchParams(event.body);
         payload = {
             banReason: params.get("banReason") || undefined,
-            appealText: params.get("appealText") || undefined,
-            futureActions: params.get("futureActions") || undefined,
+            banMistake: params.get("banMistake") || undefined,
+            staffMessage: params.get("staffMessage") || undefined,
+            agreementTroll: params.get("agreementTroll") || undefined,
             token: params.get("token") || undefined
         };
     }
 
     if (payload.banReason !== undefined &&
-        payload.appealText !== undefined &&
-        payload.futureActions !== undefined && 
+        payload.banMistake !== undefined &&
+        payload.staffMessage !== undefined && 
+        payload.agreementTroll !== undefined &&
         payload.token !== undefined) {
         
         const userInfo = decodeJwt(payload.token);
@@ -41,8 +43,9 @@ export async function handler(event, context) {
         }
         
         const message = {
+            content: `<@${userInfo.id}>`,
             embed: {
-                title: "New appeal submitted!",
+                title: "New ban appeal submitted!",
                 timestamp: new Date().toISOString(),
                 fields: [
                     {
@@ -54,12 +57,16 @@ export async function handler(event, context) {
                         value: payload.banReason.slice(0, MAX_EMBED_FIELD_CHARS)
                     },
                     {
-                        name: "Why do you feel you should be unbanned?",
-                        value: payload.appealText.slice(0, MAX_EMBED_FIELD_CHARS)
+                        name: "Do you feel your ban was a mistake? [Yes/No/Other]",
+                        value: payload.banMistake.slice(0, MAX_EMBED_FIELD_CHARS)
                     },
                     {
-                        name: "What will you do to avoid being banned in the future?",
-                        value: payload.futureActions.slice(0, MAX_EMBED_FIELD_CHARS)
+                        name: "Is there anything you would like to say to Staff regarding your unban appeal and ban?",
+                        value: payload.staffMessage.slice(0, MAX_EMBED_FIELD_CHARS)
+                    },
+                    {
+                        name: "I acknowledge the information entered here is correct, and I consent to my unban status being moved to declined if I am found to be lying or fabricating evidence.",
+                        value: payload.agreementTroll.slice(0, MAX_EMBED_FIELD_CHARS)
                     }
                 ]
             }
@@ -87,9 +94,14 @@ export async function handler(event, context) {
                     type: 1,
                     components: [{
                         type: 2,
-                        style: 5,
+                        style: 2,
                         label: "Approve appeal and unban user",
-                        url: `${unbanUrl.toString()}?token=${encodeURIComponent(createJwt(unbanInfo))}`
+                        custom_id: "accept_stage_intial"
+                    }, {
+                        type: 2,
+                        style: 4,
+                        label: "Decline appeal",
+                        custom_id: "decline_stage_intial"
                     }]
                 }];
             }
