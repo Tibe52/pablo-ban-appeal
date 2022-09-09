@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
-export function createJwt(data, duration) {
+function createJwt(data, duration) {
     const options = {
         issuer: 'ban-appeals-backend'
     };
@@ -12,6 +12,8 @@ export function createJwt(data, duration) {
     return jwt.sign(data, process.env.JWT_SECRET, options);
 }
 
-export function decodeJwt(token) {
+function decodeJwt(token) {
     return jwt.verify(token, process.env.JWT_SECRET);
 }
+
+module.exports = { createJwt, decodeJwt };
