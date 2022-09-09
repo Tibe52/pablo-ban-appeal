@@ -1,7 +1,7 @@
-import { decodeJwt } from "./helpers/jwt-helpers.js";
-import { unbanUser } from "./helpers/user-helpers.js";
+const { decodeJwt } = require("./helpers/jwt-helpers.js");
+const { unbanUser } = require("./helpers/user-helpers.js");
 
-export async function handler(event, context) {
+exports.handler = async function (event, context) {
     if (event.httpMethod !== "GET") {
         return {
             statusCode: 405
