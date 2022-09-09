@@ -1,10 +1,7 @@
-import Eris from "eris";
-import fs from "fs";
-import path from "path";
-import process from "process";
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const Discord = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+const process = require("process");
 
 function assertSuccess(err) {
     if (err) {
@@ -31,7 +28,7 @@ async function main() {
     const func = path.resolve(__dirname, "func");
 
     const url = process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL;
-    replaceInFile(path.resolve(func, "oauth.js"), /DEPLOY_PRIME_URL/g, `"${url}"`);
+    replaceInFile(path.resolve(func, "oauth.js"), "DEPLOY_PRIME_URL", `"${url}"`);
     replaceInFile(path.resolve(func, "oauth-callback.js"), "DEPLOY_PRIME_URL", `"${url}"`);
     replaceInFile(path.resolve(func, "submission-created.js"), "DEPLOY_PRIME_URL", `"${url}"`, () => {
         if (!process.env.USE_NETLIFY_FORMS) {
@@ -45,15 +42,14 @@ async function main() {
     }
 
     // Make sure the bot connected to the gateway at least once.
-    const bot = new Eris(process.env.DISCORD_BOT_TOKEN);
-    bot.on("ready", () => bot.disconnect());
-    
+    const client = new Discord.Client();
     try {
-        await bot.connect();
+        await client.login(process.env.DISCORD_BOT_TOKEN);
     } catch (e) {
         console.log(e);
         process.exit(1);
     }
+    client.destroy();
 }
 
 main();
